@@ -1,5 +1,5 @@
 {
- "version": "1.0.0",
+ "version": "1.0.1",
  "files": {
   "/app.py": {
    "src": "device/app.py",
@@ -13,8 +13,8 @@
   },
   "/www/index.html.gz": {
    "src": "release/index.html.gz",
-   "sha256": "1b75420e0c5d15bcf611f318e99f17144680b426a86defd9523ada542b428906",
-   "size": 11161
+   "sha256": "b7ffa2ea9a0ff55e8aff9bd50189f4a8d9e3957710ff5908077ee56d39b004e3",
+   "size": 11171
   },
   "/www/intro.mp4": {
    "src": "device/www/intro.mp4",
