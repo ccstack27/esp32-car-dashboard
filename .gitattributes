@@ -1,0 +1,2 @@
+# Store every file byte-for-byte: release hashes must match what GitHub serves.
+* -text

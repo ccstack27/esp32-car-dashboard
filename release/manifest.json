@@ -1,0 +1,30 @@
+{
+ "version": "1.0.0",
+ "files": {
+  "/app.py": {
+   "src": "device/app.py",
+   "sha256": "69801ea50db9de52021f1fa82f46baa7547ccc9a15178f1ef86b67fa65923773",
+   "size": 10721
+  },
+  "/updater.py": {
+   "src": "device/updater.py",
+   "sha256": "9c3651071236556fb9fe486c9fedaab2fd5d55d4ab14f19b9a07338902735840",
+   "size": 8133
+  },
+  "/www/index.html.gz": {
+   "src": "release/index.html.gz",
+   "sha256": "1b75420e0c5d15bcf611f318e99f17144680b426a86defd9523ada542b428906",
+   "size": 11161
+  },
+  "/www/intro.mp4": {
+   "src": "device/www/intro.mp4",
+   "sha256": "e63508944de76373179ce0e4968468d2932a419b3d04b4ceaf2160ab22510f78",
+   "size": 884990
+  },
+  "/www/bg.jpg": {
+   "src": "device/www/bg.jpg",
+   "sha256": "70450c3320c90c45eb5603505140f7b01db6c1715a0040a484d700c5e6cc2084",
+   "size": 73216
+  }
+ }
+}

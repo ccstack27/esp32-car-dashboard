@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050b14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Lancer Dashboard</title>
+<style>
+:root{
+  --bg:#050b14;
+  --text:#eaf6ff;
+  --muted:rgba(214,236,255,.62);
+  --faint:rgba(214,236,255,.38);
+  --glass:linear-gradient(140deg,rgba(255,255,255,.13),rgba(255,255,255,.04));
+  --glass-solid:rgba(16,30,48,.42);
+  --stroke:rgba(255,255,255,.16);
+  --stroke-hi:rgba(255,255,255,.32);
+  --accent:#3fd4ff;
+  --accent-glow:rgba(63,212,255,.55);
+  --ok:#3cf5a8;
+  --warn:#ffb547;
+  --danger:#ff4d6d;
+  --danger-glow:rgba(255,77,109,.55);
+  --radius:24px;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  background:var(--bg);color:var(--text);
+  font:15px/1.4 "Segoe UI",Roboto,"Helvetica Neue",system-ui,sans-serif;
+  overflow-x:hidden;-webkit-user-select:none;user-select:none;
+}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.num{font-variant-numeric:tabular-nums;font-family:ui-monospace,"Cascadia Mono",Consolas,monospace}
+
+/* ---------- Background ---------- */
+.backdrop{position:fixed;inset:0;z-index:0;overflow:hidden}
+.backdrop::before{
+  content:"";position:absolute;inset:-40px;
+  background:url(bg.jpg) center/cover no-repeat;
+  filter:blur(18px) saturate(130%) brightness(.45);
+  transform:scale(1.05);
+}
+.backdrop::after{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(60% 50% at 15% 10%,rgba(63,212,255,.22),transparent 70%),
+    radial-gradient(50% 45% at 90% 95%,rgba(40,90,255,.25),transparent 70%),
+    linear-gradient(180deg,rgba(5,11,20,.25),rgba(5,11,20,.7));
+}
+
+/* ---------- Glass primitive ---------- */
+.glass{
+  background:var(--glass),var(--glass-solid);
+  -webkit-backdrop-filter:blur(22px) saturate(150%);
+  backdrop-filter:blur(22px) saturate(150%);
+  border:1px solid var(--stroke);
+  border-radius:var(--radius);
+  box-shadow:0 18px 50px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+/* ---------- Intro ---------- */
+#intro{position:fixed;inset:0;z-index:20;background:#000;display:grid;place-items:center;transition:opacity .9s var(--ease)}
+#intro.gone{opacity:0;pointer-events:none}
+#intro video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:0;transition:opacity .6s}
+#intro.playing video{opacity:1}
+#intro .veil{position:absolute;inset:0;background:url(bg.jpg) center/cover;filter:blur(24px) brightness(.35);transform:scale(1.1);transition:opacity .6s}
+#intro.playing .veil,#intro.playing #gate{opacity:0;pointer-events:none}
+#gate{
+  position:relative;width:min(380px,calc(100vw - 32px));padding:34px 28px 26px;text-align:center;
+  transition:opacity .5s var(--ease),transform .5s var(--ease);
+}
+#gate .brand{font-size:30px;font-weight:800;font-style:italic;letter-spacing:.02em}
+#gate .model{margin:4px 0 26px;color:var(--muted);letter-spacing:.32em;font-size:11px;text-transform:uppercase}
+.power{
+  position:relative;width:132px;height:132px;border-radius:50%;margin:0 auto;
+  display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 35%,rgba(63,212,255,.35),rgba(63,212,255,.05) 70%);
+  border:1px solid rgba(63,212,255,.55);
+  box-shadow:0 0 40px var(--accent-glow),inset 0 0 30px rgba(63,212,255,.25);
+  animation:breathe 2.6s ease-in-out infinite;
+}
+.power svg{width:46px;height:46px}
+.power:active{transform:scale(.96)}
+#gate .hint{margin-top:18px;color:var(--muted);font-size:12px;letter-spacing:.2em;text-transform:uppercase}
+#gate .alt{margin-top:18px;color:var(--faint);font-size:12px;text-decoration:underline;text-underline-offset:3px}
+#skip{
+  position:absolute;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));
+  padding:10px 18px;border-radius:999px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;
+  opacity:0;pointer-events:none;transition:opacity .4s;
+}
+#intro.playing #skip{opacity:1;pointer-events:auto}
+@keyframes breathe{50%{box-shadow:0 0 70px var(--accent-glow),inset 0 0 40px rgba(63,212,255,.35)}}
+
+/* ---------- App shell ---------- */
+#app{
+  position:relative;z-index:1;max-width:1180px;margin:0 auto;
+  padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+}
+header{display:flex;align-items:center;gap:14px;padding:14px 18px;margin-bottom:16px}
+.logo{display:flex;flex-direction:column;line-height:1.1;min-width:0}
+.logo b{font-size:20px;font-weight:800;font-style:italic;letter-spacing:.02em}
+.logo span{font-size:11px;color:var(--muted);letter-spacing:.24em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header .spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;border:1px solid var(--stroke);background:rgba(255,255,255,.06);font-size:12px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.online .dot{background:var(--ok);box-shadow:0 0 10px var(--ok)}
+.offline .dot{background:var(--danger);box-shadow:0 0 10px var(--danger)}
+.icon-btn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--stroke);background:rgba(255,255,255,.06);flex:none}
+.icon-btn svg{width:18px;height:18px}
+.icon-btn:hover{border-color:var(--stroke-hi)}
+
+.grid{display:grid;gap:16px;grid-template-columns:repeat(12,minmax(0,1fr))}
+.card{padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.c-ign{grid-column:span 4}
+.c-start{grid-column:span 4;grid-row:span 2}
+.c-horn{grid-column:span 4;grid-row:span 2}
+.c-park{grid-column:span 4}
+.c-aux{grid-column:span 12}
+@media (max-width:960px){
+  .c-ign,.c-park{grid-column:span 6}
+  .c-start,.c-horn{grid-column:span 6;grid-row:auto}
+}
+@media (max-width:600px){
+  .grid{gap:12px}
+  .c-ign,.c-park,.c-start,.c-horn{grid-column:span 12}
+  .card{padding:18px}
+  header{padding:12px 14px}
+  .pill .lbl{display:none}
+}
+
+.card-head{display:flex;align-items:center;gap:12px}
+.badge{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;flex:none;background:rgba(255,255,255,.07);border:1px solid var(--stroke);transition:all .35s var(--ease)}
+.badge svg{width:22px;height:22px}
+.title{font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px}
+.sub{color:var(--muted);font-size:12px}
+.io{margin-left:auto;font-size:11px;color:var(--faint);letter-spacing:.08em;border:1px solid var(--stroke);padding:3px 8px;border-radius:8px;flex:none}
+.status{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.status b{color:var(--text)}
+.is-on .badge{background:rgba(63,212,255,.18);border-color:rgba(63,212,255,.6);box-shadow:0 0 22px var(--accent-glow);color:var(--accent)}
+
+/* ---------- Toggle switch ---------- */
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.switch{
+  position:relative;width:76px;height:40px;border-radius:999px;flex:none;
+  background:rgba(0,0,0,.28);border:1px solid var(--stroke);
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.45);
+  transition:background .35s var(--ease),border-color .35s,box-shadow .35s;
+}
+.switch::after{
+  content:"";position:absolute;top:4px;left:4px;width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(160deg,#fff,#b9c9d8);
+  box-shadow:0 4px 10px rgba(0,0,0,.4);
+  transition:transform .35s var(--ease);
+}
+.switch[aria-checked=true]{background:linear-gradient(90deg,rgba(63,212,255,.55),rgba(63,212,255,.85));border-color:rgba(63,212,255,.9);box-shadow:0 0 22px var(--accent-glow),inset 0 1px 6px rgba(255,255,255,.25)}
+.switch[aria-checked=true]::after{transform:translateX(36px)}
+.switch:disabled{opacity:.55;cursor:progress}
+.switch:focus-visible,.round:focus-visible,.icon-btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* ---------- Round action buttons ---------- */
+.round-wrap{position:relative;width:188px;height:188px;margin:6px auto 0;flex:none}
+.round-wrap svg.ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:5}
+.ring .track{stroke:rgba(255,255,255,.08)}
+.ring .prog{stroke:var(--warn);stroke-linecap:round;filter:drop-shadow(0 0 6px var(--warn))}
+.round{
+  position:absolute;inset:14px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.22),rgba(255,255,255,.04) 70%),rgba(12,24,40,.5);
+  border:1px solid var(--stroke-hi);
+  box-shadow:0 12px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -10px 30px rgba(0,0,0,.3);
+  font-weight:800;letter-spacing:.16em;text-transform:uppercase;font-size:14px;
+  transition:transform .15s var(--ease),box-shadow .35s,border-color .35s,opacity .35s;
+  touch-action:none;
+}
+.round svg{width:34px;height:34px}
+.round small{font-weight:600;font-size:10px;letter-spacing:.22em;color:var(--muted)}
+.round:active:not(:disabled){transform:scale(.95)}
+.round:disabled{opacity:.4;cursor:not-allowed}
+.c-start.ready .round{border-color:rgba(60,245,168,.7);box-shadow:0 0 34px rgba(60,245,168,.35),0 12px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.35)}
+.c-start.ready .round svg{color:var(--ok)}
+.c-start.cranking .round{border-color:var(--warn);box-shadow:0 0 50px rgba(255,181,71,.6),inset 0 0 30px rgba(255,181,71,.25);animation:shake .09s linear infinite}
+.c-start.cranking .round svg{color:var(--warn)}
+.c-horn.is-on .round{border-color:var(--danger);box-shadow:0 0 60px var(--danger-glow),inset 0 0 40px rgba(255,77,109,.35);transform:scale(.95)}
+.c-horn.is-on .round svg{color:var(--danger)}
+.c-horn.is-on .badge{background:rgba(255,77,109,.18);border-color:rgba(255,77,109,.6);box-shadow:0 0 22px var(--danger-glow);color:var(--danger)}
+.c-start.cranking .badge{background:rgba(255,181,71,.18);border-color:rgba(255,181,71,.6);box-shadow:0 0 22px rgba(255,181,71,.5);color:var(--warn)}
+.waves{position:absolute;inset:14px;border-radius:50%;pointer-events:none}
+.c-horn.is-on .waves::before,.c-horn.is-on .waves::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--danger);animation:wave 1s ease-out infinite}
+.c-horn.is-on .waves::after{animation-delay:.5s}
+.note{text-align:center;font-size:12px;color:var(--muted);min-height:1.4em}
+.note.warn{color:var(--warn)}
+@keyframes shake{25%{transform:translate(1px,-1px)}50%{transform:translate(-1px,1px)}75%{transform:translate(1px,1px)}}
+@keyframes wave{from{transform:scale(1);opacity:.8}to{transform:scale(1.35);opacity:0}}
+
+/* ---------- AUX ---------- */
+.aux-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:960px){.aux-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:420px){.aux-grid{grid-template-columns:1fr}}
+.aux{padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid var(--stroke);transition:border-color .35s,background .35s}
+.aux.is-on{border-color:rgba(63,212,255,.55);background:rgba(63,212,255,.08)}
+.aux .name{font-weight:700;letter-spacing:.12em;font-size:13px}
+
+footer{margin-top:18px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;color:var(--faint);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+.upd-open{color:var(--muted);cursor:pointer}
+.upd-open svg{width:14px;height:14px}
+.upd-open:hover{color:var(--text);border-color:var(--stroke-hi)}
+
+/* ---------- Update sheet ---------- */
+#upd{position:fixed;inset:0;z-index:25;display:grid;place-items:center;padding:16px;background:rgba(2,6,12,.55);opacity:0;pointer-events:none;transition:opacity .3s var(--ease)}
+#upd.open{opacity:1;pointer-events:auto}
+.sheet{width:min(440px,100%);max-height:calc(100dvh - 32px);overflow:auto;padding:22px;display:flex;flex-direction:column;gap:16px;transform:translateY(16px) scale(.98);transition:transform .35s var(--ease)}
+#upd.open .sheet{transform:none}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.step{display:none;flex-direction:column;gap:14px;margin:0}
+.step.on{display:flex}
+.step p{margin:0;line-height:1.5}
+.field{display:flex;flex-direction:column;gap:6px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.field input{font:inherit;font-size:16px;letter-spacing:normal;text-transform:none;color:var(--text);padding:12px 14px;border-radius:14px;border:1px solid var(--stroke);background:rgba(0,0,0,.28);outline:none;-webkit-user-select:text;user-select:text}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(63,212,255,.2)}
+.cta{padding:14px;border-radius:16px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:13px;background:linear-gradient(90deg,rgba(63,212,255,.55),rgba(63,212,255,.85));border:1px solid rgba(63,212,255,.9);box-shadow:0 0 22px var(--accent-glow)}
+.cta.ghost{background:rgba(255,255,255,.06);border-color:var(--stroke);box-shadow:none}
+.cta:disabled{opacity:.5;cursor:progress}
+.link{color:var(--accent);font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.nets{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto}
+.net{display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;border-radius:14px;text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--stroke)}
+.net.sel{border-color:var(--accent);background:rgba(63,212,255,.12)}
+.net b{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.net svg{width:16px;height:16px;flex:none;color:var(--muted)}
+.bars{display:inline-flex;align-items:flex-end;gap:2px;height:14px}
+.bars i{width:3px;background:var(--faint);border-radius:1px}
+.bars i.lit{background:var(--accent)}
+#stRun{align-items:center;text-align:center;padding:6px 0}
+.run-icon{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--stroke)}
+.run-icon svg{width:30px;height:30px}
+.run-icon.spin{border-color:rgba(63,212,255,.25);border-top-color:var(--accent);animation:spin 1s linear infinite}
+.run-icon.ok{border-color:var(--ok);color:var(--ok);box-shadow:0 0 24px rgba(60,245,168,.35)}
+.run-icon.bad{border-color:var(--danger);color:var(--danger);box-shadow:0 0 24px var(--danger-glow)}
+.run-icon.new{border-color:var(--accent);color:var(--accent);box-shadow:0 0 24px var(--accent-glow)}
+.run-title{font-weight:700;font-size:17px}
+.run-msg{max-width:340px;line-height:1.5}
+.bar{width:100%;height:8px;border-radius:99px;background:rgba(0,0,0,.35);border:1px solid var(--stroke);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#8be9ff);box-shadow:0 0 12px var(--accent-glow);transition:width .4s var(--ease)}
+.actions{display:flex;flex-direction:column;gap:8px;width:100%}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- Entrance ---------- */
+#app{visibility:hidden}
+#app.show{visibility:visible}
+#app.show .rise{animation:rise .8s var(--ease) both;animation-delay:calc(var(--i,0) * 90ms)}
+@keyframes rise{from{opacity:0;transform:translateY(26px) scale(.98);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+
+#toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translate(-50%,30px);opacity:0;z-index:30;padding:12px 20px;border-radius:16px;font-size:13px;transition:all .35s var(--ease);pointer-events:none;max-width:calc(100vw - 32px)}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="backdrop"></div>
+
+<!-- ============ INTRO ============ -->
+<section id="intro">
+  <div class="veil"></div>
+  <video id="vid" src="intro.mp4" playsinline webkit-playsinline preload="auto"></video>
+  <div id="gate" class="glass">
+    <div class="brand">Briannex</div>
+    <div class="model">Misyubibi Lancer</div>
+    <button class="power" id="enter" aria-label="Start system">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#3fd4ff" stroke-width="2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.2a8 8 0 1 0 11.4 0"/></svg>
+    </button>
+    <div class="hint">Tap to start system</div>
+    <button class="alt" id="skipGate">Skip intro</button>
+  </div>
+  <button id="skip" class="glass">Skip ›</button>
+</section>
+
+<!-- ============ DASHBOARD ============ -->
+<main id="app">
+  <header class="glass rise" style="--i:0">
+    <div class="logo"><b>Briannex</b><span>Misyubibi Lancer · Control</span></div>
+    <div class="spacer"></div>
+    <div class="pill" id="link"><span class="dot"></span><span class="lbl" id="linkText">Connecting</span></div>
+    <button class="icon-btn" id="replay" aria-label="Replay intro" title="Replay intro">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+    </button>
+  </header>
+
+  <div class="grid">
+    <!-- Ignition -->
+    <section class="card glass c-ign rise" style="--i:1" data-sw="ign">
+      <div class="card-head">
+        <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg></div>
+        <div><div class="title">Ignition</div><div class="sub">Main power</div></div>
+        <span class="io num">IO4</span>
+      </div>
+      <div class="row">
+        <div class="status">Status <b data-state>Off</b></div>
+        <button class="switch" role="switch" aria-checked="false" aria-label="Ignition"></button>
+      </div>
+    </section>
+
+    <!-- Engine start -->
+    <section class="card glass c-start rise" style="--i:2" id="startCard">
+      <div class="card-head">
+        <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></div>
+        <div><div class="title">Engine Start</div><div class="sub">3 s crank pulse</div></div>
+        <span class="io num">IO5</span>
+      </div>
+      <div class="round-wrap">
+        <svg class="ring" viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="46"/><circle class="prog" id="crankRing" cx="50" cy="50" r="46" stroke-dasharray="289.03" stroke-dashoffset="289.03"/></svg>
+        <button class="round" id="crankBtn" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.2a8 8 0 1 0 11.4 0"/></svg>
+          <span>Start</span><small>Engine</small>
+        </button>
+      </div>
+      <div class="note warn" id="crankNote">Turn ignition on first</div>
+    </section>
+
+    <!-- Horn -->
+    <section class="card glass c-horn rise" style="--i:3" id="hornCard">
+      <div class="card-head">
+        <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg></div>
+        <div><div class="title">Horn / Alarm</div><div class="sub">Hold to sound</div></div>
+        <span class="io num">IO6</span>
+      </div>
+      <div class="round-wrap">
+        <div class="waves"></div>
+        <button class="round" id="hornBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+          <span>Honk</span><small>Hold</small>
+        </button>
+      </div>
+      <div class="note" id="hornNote">Press and hold</div>
+    </section>
+
+    <!-- Park light -->
+    <section class="card glass c-park rise" style="--i:4" data-sw="park">
+      <div class="card-head">
+        <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V16h8v-1.3A7 7 0 0 0 12 2z"/></svg></div>
+        <div><div class="title">Park Light</div><div class="sub">Position lamps</div></div>
+        <span class="io num">IO7</span>
+      </div>
+      <div class="row">
+        <div class="status">Status <b data-state>Off</b></div>
+        <button class="switch" role="switch" aria-checked="false" aria-label="Park light"></button>
+      </div>
+    </section>
+
+    <!-- AUX -->
+    <section class="card glass c-aux rise" style="--i:5">
+      <div class="card-head">
+        <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+        <div><div class="title">Auxiliary</div><div class="sub">Reserved channels</div></div>
+      </div>
+      <div class="aux-grid">
+        <div class="aux row" data-sw="aux1"><div><div class="name">AUX 1</div><div class="sub num">IO15 · <span data-state>Off</span></div></div><button class="switch" role="switch" aria-checked="false" aria-label="AUX 1"></button></div>
+        <div class="aux row" data-sw="aux2"><div><div class="name">AUX 2</div><div class="sub num">IO16 · <span data-state>Off</span></div></div><button class="switch" role="switch" aria-checked="false" aria-label="AUX 2"></button></div>
+        <div class="aux row" data-sw="aux3"><div><div class="name">AUX 3</div><div class="sub num">IO17 · <span data-state>Off</span></div></div><button class="switch" role="switch" aria-checked="false" aria-label="AUX 3"></button></div>
+        <div class="aux row" data-sw="aux4"><div><div class="name">AUX 4</div><div class="sub num">IO18 · <span data-state>Off</span></div></div><button class="switch" role="switch" aria-checked="false" aria-label="AUX 4"></button></div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="rise" style="--i:6">
+    <div>ESP32-S3 · Firmware <span class="num" id="ver">--</span> · Uptime <span class="num" id="uptime">--:--:--</span></div>
+    <button class="pill upd-open" id="updOpen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+      Update Firmware
+    </button>
+  </footer>
+</main>
+
+<!-- ============ FIRMWARE UPDATE ============ -->
+<div id="upd" role="dialog" aria-modal="true" aria-labelledby="updTitle">
+  <div class="sheet glass">
+    <div class="sheet-head">
+      <div><div class="title" id="updTitle">Firmware Update</div><div class="sub">Installed <span class="num" id="updVer">--</span></div></div>
+      <button class="icon-btn" id="updClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+
+    <!-- 1. PIN -->
+    <form class="step" id="stPin">
+      <p class="sub">Updates download from GitHub over a Wi-Fi network with internet. Ignition must be off; all relays switch off while installing.</p>
+      <label class="field"><span>Update PIN</span><input id="pin" type="password" inputmode="numeric" autocomplete="off" required></label>
+      <button class="cta" type="submit">Continue</button>
+    </form>
+
+    <!-- 2. Wi-Fi -->
+    <form class="step" id="stWifi">
+      <div class="row"><span class="sub">Choose a network with internet</span><button type="button" class="link" id="rescan">Rescan</button></div>
+      <div class="nets" id="nets"></div>
+      <label class="field"><span>Network name</span><input id="ssid" autocomplete="off" autocapitalize="off" required></label>
+      <label class="field"><span>Password</span><input id="pass" type="password" autocomplete="off"></label>
+      <button class="cta" type="submit">Connect &amp; check for updates</button>
+    </form>
+
+    <!-- 3. Progress / result -->
+    <div class="step" id="stRun">
+      <div class="run-icon" id="runIcon"></div>
+      <div class="run-title" id="runTitle">Working…</div>
+      <div class="sub run-msg" id="runMsg"></div>
+      <div class="bar" id="bar" hidden><i id="barFill"></i></div>
+      <div class="actions" id="runActions"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="glass"></div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const intro = $('#intro'), vid = $('#vid'), app = $('#app');
+let state = {}, busy = 0, online = null, crankEnd = 0, crankDur = 3000;
+let hornHeld = false, hornTimer = 0, hornStart = 0;
+
+/* ---------------- Intro ---------------- */
+function showDashboard() {
+  vid.pause();
+  intro.classList.add('gone');
+  app.classList.remove('show'); void app.offsetWidth; app.classList.add('show');
+}
+function playIntro() {
+  intro.classList.remove('gone');
+  vid.currentTime = 0;
+  vid.muted = false;
+  const p = vid.play();
+  intro.classList.add('playing');
+  if (p) p.catch(() => {             // sound blocked → retry muted
+    vid.muted = true;
+    vid.play().catch(showDashboard);
+  });
+}
+$('#enter').onclick = playIntro;
+$('#skipGate').onclick = showDashboard;
+$('#skip').onclick = showDashboard;
+$('#replay').onclick = playIntro;
+vid.onended = showDashboard;
+vid.onerror = () => { if (intro.classList.contains('playing')) showDashboard(); };
+if (location.hash === '#dash') showDashboard();   // bookmark /#dash to skip the intro
+
+/* ---------------- API ---------------- */
+async function call(path, method = 'POST') {
+  const r = await fetch('/api/' + path, { method, cache: 'no-store' });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+  render(j); setOnline(true);
+  return j;
+}
+function setOnline(v) {
+  if (v === online) return;
+  online = v;
+  const el = $('#link');
+  el.className = 'pill ' + (v ? 'online' : 'offline');
+  $('#linkText').textContent = v ? 'Linked' : 'Offline';
+}
+let toastT;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600);
+}
+const buzz = ms => navigator.vibrate && navigator.vibrate(ms);
+
+/* ---------------- Render ---------------- */
+function render(s) {
+  state = s;
+  document.querySelectorAll('[data-sw]').forEach(el => {
+    const on = !!s[el.dataset.sw];
+    el.classList.toggle('is-on', on);
+    const sw = el.querySelector('.switch');
+    if (!sw.disabled) sw.setAttribute('aria-checked', on);
+    el.querySelector('[data-state]').textContent = on ? 'On' : 'Off';
+  });
+
+  const card = $('#startCard'), btn = $('#crankBtn'), note = $('#crankNote');
+  const cranking = !!s.crank;
+  btn.disabled = !s.ign && !cranking;
+  card.classList.toggle('ready', !!s.ign && !cranking);
+  card.classList.toggle('cranking', cranking);
+  if (cranking) {
+    crankDur = s.crank_ms || 3000;
+    const end = performance.now() + s.crank_left;
+    if (!crankEnd || Math.abs(end - crankEnd) > 250) crankEnd = end;
+    note.textContent = 'Cranking… tap to abort'; note.className = 'note warn';
+    btn.querySelector('span').textContent = 'Stop';
+  } else {
+    crankEnd = 0;
+    btn.querySelector('span').textContent = 'Start';
+    note.textContent = s.ign ? 'Ready to crank' : 'Turn ignition on first';
+    note.className = 'note' + (s.ign ? '' : ' warn');
+  }
+
+  if (!hornHeld) $('#hornCard').classList.toggle('is-on', !!s.horn);
+
+  $('#ver').textContent = ver(s.ver);
+  const u = s.up | 0, p = n => String(n).padStart(2, '0');
+  $('#uptime').textContent = p(u / 3600 | 0) + ':' + p((u / 60 | 0) % 60) + ':' + p(u % 60);
+}
+
+(function ringLoop() {
+  const ring = $('#crankRing'), C = 289.03;
+  let off = C;
+  if (crankEnd) {
+    const left = Math.max(0, crankEnd - performance.now());
+    off = C * (left / crankDur);           // ring drains as the 3 s pulse runs
+    if (left === 0) { crankEnd = 0; poll(); }
+  }
+  ring.setAttribute('stroke-dashoffset', off.toFixed(1));
+  ring.style.opacity = crankEnd ? 1 : 0;   // round linecap would otherwise leave a dot when idle
+  requestAnimationFrame(ringLoop);
+})();
+
+/* ---------------- Toggles ---------------- */
+document.querySelectorAll('[data-sw] .switch').forEach(sw => {
+  const id = sw.closest('[data-sw]').dataset.sw;
+  sw.onclick = async () => {
+    const want = sw.getAttribute('aria-checked') !== 'true';
+    sw.setAttribute('aria-checked', want);    // optimistic
+    sw.disabled = true; busy++; buzz(15);
+    try { await call(`set?id=${id}&on=${want ? 1 : 0}`); }
+    catch (e) { sw.setAttribute('aria-checked', !want); toast('Could not reach the car — ' + e.message); setOnline(false); }
+    finally { sw.disabled = false; busy--; render(state); }
+  };
+});
+
+/* ---------------- Crank ---------------- */
+$('#crankBtn').onclick = async () => {
+  busy++; buzz(40);
+  try { await call(state.crank ? 'crank?stop=1' : 'crank'); }
+  catch (e) { toast(e.message); }
+  finally { busy--; }
+};
+
+/* ---------------- Horn (hold) ---------------- */
+const hornBtn = $('#hornBtn'), hornCard = $('#hornCard');
+function hornDown(e) {
+  e.preventDefault();
+  if (hornHeld) return;
+  hornHeld = true; hornStart = Date.now();
+  hornBtn.setPointerCapture && e.pointerId != null && hornBtn.setPointerCapture(e.pointerId);
+  hornCard.classList.add('is-on'); $('#hornNote').textContent = 'Sounding…'; buzz(30);
+  const ping = () => call('horn?on=1').catch(() => {});
+  ping(); hornTimer = setInterval(ping, 250);  // keep-alive; ESP32 auto-releases if pings stop
+}
+function hornUp() {
+  if (!hornHeld) return;
+  hornHeld = false; clearInterval(hornTimer);
+  const wait = Math.max(0, 150 - (Date.now() - hornStart));  // a quick tap still gives a short beep
+  setTimeout(() => call('horn?on=0').catch(() => {}), wait);
+  hornCard.classList.remove('is-on'); $('#hornNote').textContent = 'Press and hold';
+}
+hornBtn.addEventListener('pointerdown', hornDown);
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => hornBtn.addEventListener(ev, hornUp));
+hornBtn.addEventListener('contextmenu', e => e.preventDefault());
+hornBtn.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) hornDown(e); });
+hornBtn.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') hornUp(); });
+window.addEventListener('blur', hornUp);
+document.addEventListener('visibilitychange', () => { if (document.hidden) hornUp(); });
+
+/* ---------------- Firmware update ---------------- */
+const upd = $('#upd');
+let updPin = '', updTimer = 0, updStage = '', wantVer = '', rebooting = false;
+const ver = v => !v ? '--' : v === 'dev' ? 'dev' : 'v' + v;
+const size = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+const ICON = {
+  ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>',
+  bad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 7v6"/><path d="M12 17h.01"/></svg>',
+  new: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>',
+};
+
+async function updCall(cmd, body) {
+  const r = await fetch('/api/update/' + cmd, {
+    method: body ? 'POST' : 'GET', cache: 'no-store',
+    headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+  return j;
+}
+function step(id) { upd.querySelectorAll('.step').forEach(s => s.classList.toggle('on', s.id === id)); }
+
+// Progress view. Buttons are rebuilt only when `key` changes so polling never eats a tap.
+let runKey = '';
+function show(key, icon, title, msg, actions, pct) {
+  step('stRun');
+  const ic = $('#runIcon');
+  ic.className = 'run-icon ' + icon;
+  ic.innerHTML = ICON[icon] || '';
+  $('#runTitle').textContent = title;
+  $('#runMsg').textContent = msg || '';
+  $('#bar').hidden = pct == null;
+  if (pct != null) $('#barFill').style.width = pct + '%';
+  if (key === runKey) return;
+  runKey = key;
+  $('#runActions').replaceChildren(...(actions || []).map(([label, fn, ghost]) => {
+    const b = document.createElement('button');
+    b.className = 'cta' + (ghost ? ' ghost' : '');
+    b.textContent = label; b.onclick = fn;
+    return b;
+  }));
+}
+
+function openUpd() {
+  upd.classList.add('open');
+  $('#updVer').textContent = ver(state.ver);
+  runKey = ''; rebooting = false;
+  updCall('status').then(s => {
+    if (s.stage === 'idle') { step('stPin'); $('#pin').focus(); }
+    else { updStage = s.stage; wantVer = s.latest; startPoll(); renderUpd(s); }  // resume one in progress
+  }).catch(() => { step('stPin'); });
+}
+function closeUpd() {
+  if (['downloading', 'installing', 'rebooting'].includes(updStage)) return;
+  stopPoll();
+  if (updStage && updStage !== 'idle') updCall('cancel', {}).catch(() => {});
+  updStage = '';
+  upd.classList.remove('open');
+}
+function cancelUpd() { stopPoll(); updCall('cancel', {}).catch(() => {}); updStage = ''; runKey = ''; step('stWifi'); }
+
+async function scan() {
+  runKey = '';
+  show('scan', 'spin', 'Scanning for Wi-Fi', 'This takes a few seconds');
+  try {
+    const { nets } = await updCall('scan', { pin: updPin });
+    renderNets(nets);
+    step('stWifi');
+  } catch (e) {
+    show('scan-err', 'bad', "Can't start the update", e.message, [['Back', () => { runKey = ''; step('stPin'); }, true]]);
+  }
+}
+function renderNets(nets) {
+  const box = $('#nets');
+  if (!nets.length) { box.innerHTML = '<div class="sub">No networks found — type the name below.</div>'; return; }
+  box.replaceChildren(...nets.map(n => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'net';
+    const lvl = n.rssi > -55 ? 4 : n.rssi > -67 ? 3 : n.rssi > -78 ? 2 : 1;
+    b.innerHTML = '<span class="bars">' + [5, 8, 11, 14].map((h, i) => `<i style="height:${h}px" class="${i < lvl ? 'lit' : ''}"></i>`).join('') + '</span><b></b>' +
+      (n.lock ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>' : '');
+    b.querySelector('b').textContent = n.ssid;
+    b.onclick = () => {
+      box.querySelectorAll('.net').forEach(x => x.classList.toggle('sel', x === b));
+      $('#ssid').value = n.ssid; $('#pass').value = '';
+      if (n.lock) $('#pass').focus();
+    };
+    return b;
+  }));
+}
+
+function startPoll() { stopPoll(); updTimer = setInterval(pollUpd, 800); }
+function stopPoll() { clearInterval(updTimer); updTimer = 0; }
+async function pollUpd() {
+  try { renderUpd(await updCall('status')); }
+  catch {
+    if (rebooting) show('wait', 'spin', 'Restarting', 'Waiting for the car to come back online… If your phone left the "Misyubibi Lancer" Wi-Fi, reconnect to it.');
+    else $('#runMsg').textContent = 'Reconnecting to the car…';  // AP may hop channels when the ESP32 joins Wi-Fi
+  }
+}
+function renderUpd(s) {
+  updStage = s.stage;
+  if (s.latest) wantVer = s.latest;
+  switch (s.stage) {
+    case 'connecting':
+      return show(s.stage, 'spin', 'Connecting to Wi-Fi', s.msg, [['Cancel', cancelUpd, true]]);
+    case 'checking':
+      return show(s.stage, 'spin', 'Checking for updates', s.msg, [['Cancel', cancelUpd, true]]);
+    case 'available':
+      return show(s.stage, 'new', 'Update available',
+        `${ver(s.version)} → ${ver(s.latest)} · ${s.files} file${s.files === 1 ? '' : 's'}, ${size(s.total)}`,
+        [['Install update', install], ['Not now', closeUpd, true]]);
+    case 'uptodate':
+      return show(s.stage, 'ok', "You're up to date", `${ver(s.version)} is the latest release.`, [['Done', closeUpd]]);
+    case 'downloading':
+      return show(s.stage, 'spin', 'Downloading ' + ver(s.latest),
+        `${s.msg} · ${size(s.done)} of ${size(s.total)} — keep this page open`,
+        null, s.total ? Math.min(100, s.done / s.total * 100) : 0);
+    case 'installing':
+      return show(s.stage, 'spin', 'Installing', "Don't power off the car", null, 100);
+    case 'rebooting':
+      rebooting = true;
+      return show(s.stage, 'spin', 'Restarting', s.msg);
+    case 'error':
+      stopPoll();
+      return show(s.stage + s.msg, 'bad', 'Update stopped', s.msg,
+        [['Try again', () => { runKey = ''; step('stWifi'); }], ['Close', closeUpd, true]]);
+    case 'idle':
+      stopPoll();
+      if (!rebooting) { runKey = ''; return step('stPin'); }
+      rebooting = false;
+      if (s.version === wantVer) {
+        show('done', 'ok', 'Updated to ' + ver(s.version), 'Reloading the dashboard…');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        show('rolled', 'bad', "Update didn't start", `The new version failed its first boot, so the car went back to ${ver(s.version)}. Nothing else changed.`, [['Close', closeUpd]]);
+      }
+  }
+}
+async function install() {
+  runKey = '';
+  show('inst', 'spin', 'Preparing', 'Switching all relays off');
+  try { renderUpd(await updCall('install', { pin: updPin })); startPoll(); }
+  catch (e) { show('inst-err', 'bad', "Couldn't install", e.message, [['Close', closeUpd, true]]); }
+}
+
+$('#updOpen').onclick = openUpd;
+$('#updClose').onclick = closeUpd;
+upd.addEventListener('click', e => { if (e.target === upd) closeUpd(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && upd.classList.contains('open')) closeUpd(); });
+$('#stPin').onsubmit = e => { e.preventDefault(); updPin = $('#pin').value.trim(); scan(); };
+$('#rescan').onclick = scan;
+$('#stWifi').onsubmit = async e => {
+  e.preventDefault();
+  const body = { pin: updPin, ssid: $('#ssid').value.trim(), password: $('#pass').value };
+  $('#pass').value = '';  // never kept: asked every time
+  runKey = '';
+  show('conn', 'spin', 'Connecting to Wi-Fi', 'Connecting to ' + body.ssid);
+  try { renderUpd(await updCall('connect', body)); startPoll(); }
+  catch (e) { show('conn-err', 'bad', "Couldn't start", e.message, [['Back', () => { runKey = ''; step('stWifi'); }, true]]); }
+};
+
+/* ---------------- Live sync ---------------- */
+async function poll() {
+  if (busy || hornHeld) return;
+  try { await call('state', 'GET'); }
+  catch { setOnline(false); }
+}
+poll(); setInterval(poll, 1500);
+})();
+</script>
+</body>
+</html>
