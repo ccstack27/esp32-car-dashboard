@@ -43,3 +43,10 @@
 ### Not yet tested
 - A real update end to end from GitHub (needs the repo pushed and a Wi-Fi network with internet).
 - Everything from the earlier session's list (phone over AP, real relay switching).
+
+## 2026-10-17 (later) — GitHub connected
+
+- Repo: https://github.com/ccstack27/esp32-car-dashboard (public). Pushed release v1.0.0.
+- Set `UPDATE_URL` in `device/config.py` and USB-deployed; the board now reports firmware v1.0.0.
+- Verified from the PC that GitHub serves a correctly signed manifest and byte-identical files (all sha256 match).
+- Next: on a phone, Update Firmware → PIN → Wi-Fi should report "up to date (v1.0.0)"; then release v1.0.1 to test a real install.
