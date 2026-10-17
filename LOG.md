@@ -50,3 +50,18 @@
 - Set `UPDATE_URL` in `device/config.py` and USB-deployed; the board now reports firmware v1.0.0.
 - Verified from the PC that GitHub serves a correctly signed manifest and byte-identical files (all sha256 match).
 - Next: on a phone, Update Firmware → PIN → Wi-Fi should report "up to date (v1.0.0)"; then release v1.0.1 to test a real install.
+
+## 2026-10-17 (end of day) — First over-the-air update test
+
+### Done
+- Phone test of the updater against v1.0.0: the board joined Wi-Fi, reached GitHub, verified the signature and correctly reported **"You're up to date"**. This confirms Wi-Fi join, HTTPS from the board and signature checking all work in the real world.
+- Renamed AUX 1 → **Fog Lamp** in the UI (IO15; API id stays `aux1`). Released **v1.0.1** (only `index.html.gz` changed, ~11 KB) and pushed.
+- GitHub took ~40 s to serve the new release; verified from the PC that the served file matches the signed manifest.
+
+### Not yet confirmed
+- Whether the phone actually installed v1.0.1 (expected: "Update available v1.0.0 → v1.0.1", install, restart, "Updated to v1.0.1", footer shows v1.0.1, Fog Lamp label visible). The user stopped for the day before reporting back.
+
+### Next session
+1. Ask how the v1.0.1 install went. If it didn't run yet, do it: Update Firmware → PIN → Wi-Fi → Install.
+   - If the board shows v1.0.0 after restarting, the new version was rolled back; check serial output over USB.
+2. Still pending from earlier: real relay switching tests (bench-test IO5 crank with a test light first), checking that IO15–IO18 relays are active-high.

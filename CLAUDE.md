@@ -7,7 +7,7 @@ MicroPython (v1.27) web dashboard on an ESP32-S3 that switches car loads through
 ## Hardware
 - Board on **COM18**, 16 MB flash, no PSRAM (PSRAM errors in the boot log are harmless).
 - Relays are **active-high** (`ACTIVE_LOW = False` in `app.py`).
-- Pin map: IO4 ignition (toggle), IO5 crank (3 s pulse), IO6 horn/alarm (hold), IO7 park light (toggle), IO15–IO18 AUX 1–4 (toggles, future use).
+- Pin map: IO4 ignition (toggle), IO5 crank (3 s pulse), IO6 horn/alarm (hold), IO7 park light (toggle), IO15 Fog Lamp (toggle; API id still `aux1`), IO16–IO18 AUX 2–4 (toggles, future use).
 - Wi-Fi AP SSID `Misyubibi Lancer` (password in `device/config.py`), dashboard at http://192.168.4.1 (`/#dash` skips the intro).
 
 ## Layout
